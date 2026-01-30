@@ -1,5 +1,7 @@
 package com.example.webapp.dto;
 
+import java.util.List;
+
 public class CourseDTO {
     
     private Long id;
@@ -7,6 +9,7 @@ public class CourseDTO {
     private String description;
     private Long departmentId;
     private String departmentName;
+    private List<Long> studentIds;
 
     public CourseDTO() {}
 
@@ -48,5 +51,13 @@ public class CourseDTO {
 
     public void setDepartmentName(String departmentName) {
         this.departmentName = departmentName;
+    }
+
+    public List<Long> getStudentIds() {
+        return studentIds;
+    }
+
+    public void setStudentIds(List<Long> studentIds) {
+        this.studentIds = studentIds;
     }
 }

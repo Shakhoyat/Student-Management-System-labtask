@@ -2,91 +2,102 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Student Form - Student Management System</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
-        .navbar { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .navbar a { color: white; text-decoration: none; margin: 0 1rem; }
-        .navbar .brand { font-size: 1.5rem; font-weight: bold; color: #3498db; }
-        .container { max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .card h2 { color: #2c3e50; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500; }
-        input, select { width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        input:focus, select:focus { outline: none; border-color: #3498db; }
-        input:disabled { background: #f5f5f5; cursor: not-allowed; }
-        .btn { padding: 0.8rem 2rem; border-radius: 5px; text-decoration: none; font-size: 1rem; border: none; cursor: pointer; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-        .btn:hover { opacity: 0.9; }
-        .form-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-        .info-box { background: #e8f4f8; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #2c3e50; }
-        .info-box.warning { background: #fef3cd; color: #856404; }
-        select[multiple] { height: 150px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${student.id != null ? 'Edit Student' : 'New Student'}">Student Form</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar">
-        <span class="brand">📚 Student Management System</span>
-        <div>
-            <a href="/">Home</a>
-            <a href="/students">Students</a>
-            <a href="/teachers">Teachers</a>
-            <a href="/courses">Courses</a>
-            <a href="/departments">Departments</a>
+        <a href="/" class="brand">Student Management System</a>
+        <div class="nav-links">
+            <a th:href="@{/students}">Students</a>
+            <a th:href="@{/teachers}">Teachers</a>
+            <a th:href="@{/courses}">Courses</a>
+            <a th:href="@{/departments}">Departments</a>
+        </div>
+        <div class="user-info" th:if="${session.userRole != null}">
+            <span th:text="${session.userName}">User</span>
+            <span class="role-badge" th:classappend="${session.userRole.name() == 'STUDENT'} ? 'student' : 'teacher'" 
+                  th:text="${session.userRole.name()}">ROLE</span>
+            <a th:href="@{/auth/logout}">Logout</a>
         </div>
     </nav>
 
     <div class="container">
+        <div class="page-header">
+            <h1 th:text="${student.id != null ? 'Edit Student' : 'Add New Student'}">Student Form</h1>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <div th:if="${session.userRole != null && session.userRole.name() == 'STUDENT' && student.id != null}" class="info-box warning">
+            Note: As a student, you can edit your name and email, but you cannot change your role.
+        </div>
+
         <div class="card">
-            <h2 th:text="${isEdit} ? '✏️ Edit Student' : '➕ Add New Student'">Student Form</h2>
-
-            <div class="info-box warning" th:if="${isStudent}">
-                <strong>Note:</strong> As a student, you can edit all your information except your role.
-            </div>
-
-            <form th:action="${isEdit} ? @{/students/update/{id}(id=${student.id})} : @{/students/store}" 
-                  th:object="${student}" method="post">
+            <form th:action="${student.id != null ? '/students/' + student.id + '/edit' : '/students'}" 
+                  method="post" th:object="${student}">
                 
                 <div class="form-group">
-                    <label for="name">Name *</label>
-                    <input type="text" id="name" th:field="*{name}" required placeholder="Enter student name">
+                    <label class="form-label" for="name">Name *</label>
+                    <input type="text" id="name" th:field="*{name}" class="form-control" required 
+                           placeholder="Enter student name">
                 </div>
 
                 <div class="form-group">
-                    <label for="roll">Roll Number *</label>
-                    <input type="text" id="roll" th:field="*{roll}" required placeholder="Enter roll number">
+                    <label class="form-label" for="roll">Roll Number *</label>
+                    <input type="text" id="roll" th:field="*{roll}" class="form-control" required 
+                           placeholder="Enter roll number">
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" th:field="*{email}" placeholder="Enter email address">
-                </div>
-
-                <div class="form-group" th:if="${isEdit}">
-                    <label for="role">Role</label>
-                    <input type="text" id="role" th:value="${student.role}" disabled 
-                           title="Role cannot be changed">
-                    <small style="color: #7f8c8d;">Role cannot be modified</small>
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}" class="form-control" 
+                           placeholder="Enter email address">
                 </div>
 
                 <div class="form-group">
-                    <label for="courseIds">Enrolled Courses</label>
-                    <select id="courseIds" th:field="*{courseIds}" multiple>
+                    <label class="form-label" for="role">Role *</label>
+                    <select id="role" th:field="*{role}" class="form-select" required
+                            th:disabled="${session.userRole != null && session.userRole.name() == 'STUDENT'}">
+                        <option value="">Select role</option>
+                        <option th:each="r : ${T(com.example.webapp.entity.Role).values()}" 
+                                th:value="${r}" th:text="${r.name()}">ROLE</option>
+                    </select>
+                    <p th:if="${session.userRole != null && session.userRole.name() == 'STUDENT'}" class="form-text">
+                        Role cannot be changed by students.
+                    </p>
+                    <input th:if="${session.userRole != null && session.userRole.name() == 'STUDENT'}" 
+                           type="hidden" th:name="role" th:value="${student.role}">
+                </div>
+
+                <div th:if="${session.userRole != null && session.userRole.name() == 'TEACHER'}" class="form-group">
+                    <label class="form-label" for="teacherIds">Assigned Teachers</label>
+                    <select id="teacherIds" th:field="*{teacherIds}" class="form-select" multiple>
+                        <option th:each="teacher : ${teachers}" 
+                                th:value="${teacher.id}" 
+                                th:text="${teacher.name}"
+                                th:selected="${student.teacherIds != null && student.teacherIds.contains(teacher.id)}">Teacher</option>
+                    </select>
+                    <p class="form-text">Hold Ctrl/Cmd to select multiple teachers.</p>
+                </div>
+
+                <div th:if="${session.userRole != null && session.userRole.name() == 'TEACHER'}" class="form-group">
+                    <label class="form-label" for="courseIds">Enrolled Courses</label>
+                    <select id="courseIds" th:field="*{courseIds}" class="form-select" multiple>
                         <option th:each="course : ${courses}" 
                                 th:value="${course.id}" 
                                 th:text="${course.name}"
-                                th:selected="${student.courseIds != null && student.courseIds.contains(course.id)}">
-                        </option>
+                                th:selected="${student.courseIds != null && student.courseIds.contains(course.id)}">Course</option>
                     </select>
-                    <small style="color: #7f8c8d;">Hold Ctrl/Cmd to select multiple courses</small>
+                    <p class="form-text">Hold Ctrl/Cmd to select multiple courses.</p>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" th:text="${isEdit} ? 'Update Student' : 'Create Student'">Save</button>
-                    <a href="/students" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <span th:text="${student.id != null ? 'Update Student' : 'Create Student'}">Save</span>
+                    </button>
+                    <a th:href="@{/students}" class="btn btn-outline-secondary">Cancel</a>
                 </div>
             </form>
         </div>

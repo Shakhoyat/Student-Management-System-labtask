@@ -2,54 +2,49 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Department Form - Student Management System</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
-        .navbar { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .navbar a { color: white; text-decoration: none; margin: 0 1rem; }
-        .navbar .brand { font-size: 1.5rem; font-weight: bold; color: #3498db; }
-        .container { max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .card h2 { color: #2c3e50; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500; }
-        input { width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        input:focus { outline: none; border-color: #3498db; }
-        .btn { padding: 0.8rem 2rem; border-radius: 5px; text-decoration: none; font-size: 1rem; border: none; cursor: pointer; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-        .btn:hover { opacity: 0.9; }
-        .form-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${department.id != null ? 'Edit Department' : 'New Department'}">Department Form</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar">
-        <span class="brand">📚 Student Management System</span>
-        <div>
-            <a href="/">Home</a>
-            <a href="/students">Students</a>
-            <a href="/teachers">Teachers</a>
-            <a href="/courses">Courses</a>
-            <a href="/departments">Departments</a>
+        <a href="/" class="brand">Student Management System</a>
+        <div class="nav-links">
+            <a th:href="@{/students}">Students</a>
+            <a th:href="@{/teachers}">Teachers</a>
+            <a th:href="@{/courses}">Courses</a>
+            <a th:href="@{/departments}">Departments</a>
+        </div>
+        <div class="user-info" th:if="${session.userRole != null}">
+            <span th:text="${session.userName}">User</span>
+            <span class="role-badge" th:classappend="${session.userRole.name() == 'STUDENT'} ? 'student' : 'teacher'" 
+                  th:text="${session.userRole.name()}">ROLE</span>
+            <a th:href="@{/auth/logout}">Logout</a>
         </div>
     </nav>
 
     <div class="container">
-        <div class="card">
-            <h2 th:text="${department.id != null} ? '✏️ Edit Department' : '➕ Add New Department'">Department Form</h2>
+        <div class="page-header">
+            <h1 th:text="${department.id != null ? 'Edit Department' : 'Add New Department'}">Department Form</h1>
+        </div>
 
-            <form th:action="${department.id != null} ? @{/departments/update/{id}(id=${department.id})} : @{/departments/store}" 
-                  th:object="${department}" method="post">
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <div class="card">
+            <form th:action="${department.id != null ? '/departments/' + department.id + '/edit' : '/departments'}" 
+                  method="post" th:object="${department}">
                 
                 <div class="form-group">
-                    <label for="name">Department Name *</label>
-                    <input type="text" id="name" th:field="*{name}" required placeholder="Enter department name">
+                    <label class="form-label" for="name">Name *</label>
+                    <input type="text" id="name" th:field="*{name}" class="form-control" required 
+                           placeholder="Enter department name">
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" th:text="${department.id != null} ? 'Update Department' : 'Create Department'">Save</button>
-                    <a href="/departments" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <span th:text="${department.id != null ? 'Update Department' : 'Create Department'}">Save</span>
+                    </button>
+                    <a th:href="@{/departments}" class="btn btn-outline-secondary">Cancel</a>
                 </div>
             </form>
         </div>

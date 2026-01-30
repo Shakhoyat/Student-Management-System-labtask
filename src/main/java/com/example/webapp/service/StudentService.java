@@ -111,6 +111,12 @@ public class StudentService {
         studentRepository.deleteById(id);
     }
 
+    public List<StudentDTO> getStudentsByIds(List<Long> ids) {
+        return studentRepository.findAllById(ids).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     public StudentDTO convertToDTO(Student student) {
         StudentDTO dto = new StudentDTO();
         dto.setId(student.getId());

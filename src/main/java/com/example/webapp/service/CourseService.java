@@ -75,6 +75,12 @@ public class CourseService {
         courseRepository.deleteById(id);
     }
 
+    public List<CourseDTO> getCoursesByIds(List<Long> ids) {
+        return courseRepository.findAllById(ids).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     private CourseDTO convertToDTO(Course course) {
         CourseDTO dto = new CourseDTO();
         dto.setId(course.getId());
@@ -83,6 +89,11 @@ public class CourseService {
         if (course.getDepartment() != null) {
             dto.setDepartmentId(course.getDepartment().getId());
             dto.setDepartmentName(course.getDepartment().getName());
+        }
+        if (course.getStudents() != null) {
+            dto.setStudentIds(course.getStudents().stream()
+                    .map(s -> s.getId())
+                    .collect(Collectors.toList()));
         }
         return dto;
     }

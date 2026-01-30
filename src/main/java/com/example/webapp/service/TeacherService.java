@@ -105,6 +105,12 @@ public class TeacherService {
         teacherRepository.save(teacher);
     }
 
+    public List<TeacherDTO> getTeachersByIds(List<Long> ids) {
+        return teacherRepository.findAllById(ids).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     private TeacherDTO convertToDTO(Teacher teacher) {
         TeacherDTO dto = new TeacherDTO();
         dto.setId(teacher.getId());

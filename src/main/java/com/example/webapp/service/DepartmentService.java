@@ -27,7 +27,7 @@ public class DepartmentService {
 
     public List<DepartmentDTO> getAllDepartmentsDTO() {
         return departmentRepository.findAll().stream()
-                .map(dept -> modelMapper.map(dept, DepartmentDTO.class))
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -49,5 +49,28 @@ public class DepartmentService {
 
     public void deleteDepartment(Long id) {
         departmentRepository.deleteById(id);
+    }
+
+    public DepartmentDTO getDepartmentDTO(Long id) {
+        Department dept = departmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+        return convertToDTO(dept);
+    }
+
+    private DepartmentDTO convertToDTO(Department dept) {
+        DepartmentDTO dto = new DepartmentDTO();
+        dto.setId(dept.getId());
+        dto.setName(dept.getName());
+        if (dept.getTeachers() != null) {
+            dto.setTeacherIds(dept.getTeachers().stream()
+                    .map(t -> t.getId())
+                    .collect(Collectors.toList()));
+        }
+        if (dept.getCourses() != null) {
+            dto.setCourseIds(dept.getCourses().stream()
+                    .map(c -> c.getId())
+                    .collect(Collectors.toList()));
+        }
+        return dto;
     }
 }

@@ -2,71 +2,77 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Course Form - Student Management System</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
-        .navbar { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .navbar a { color: white; text-decoration: none; margin: 0 1rem; }
-        .navbar .brand { font-size: 1.5rem; font-weight: bold; color: #3498db; }
-        .container { max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-        .card { background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .card h2 { color: #2c3e50; margin-bottom: 1.5rem; }
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; color: #2c3e50; font-weight: 500; }
-        input, select, textarea { width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: inherit; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #3498db; }
-        textarea { resize: vertical; min-height: 100px; }
-        .btn { padding: 0.8rem 2rem; border-radius: 5px; text-decoration: none; font-size: 1rem; border: none; cursor: pointer; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-        .btn:hover { opacity: 0.9; }
-        .form-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${course.id != null ? 'Edit Course' : 'New Course'}">Course Form</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
 </head>
 <body>
     <nav class="navbar">
-        <span class="brand">📚 Student Management System</span>
-        <div>
-            <a href="/">Home</a>
-            <a href="/students">Students</a>
-            <a href="/teachers">Teachers</a>
-            <a href="/courses">Courses</a>
-            <a href="/departments">Departments</a>
+        <a href="/" class="brand">Student Management System</a>
+        <div class="nav-links">
+            <a th:href="@{/students}">Students</a>
+            <a th:href="@{/teachers}">Teachers</a>
+            <a th:href="@{/courses}">Courses</a>
+            <a th:href="@{/departments}">Departments</a>
+        </div>
+        <div class="user-info" th:if="${session.userRole != null}">
+            <span th:text="${session.userName}">User</span>
+            <span class="role-badge" th:classappend="${session.userRole.name() == 'STUDENT'} ? 'student' : 'teacher'" 
+                  th:text="${session.userRole.name()}">ROLE</span>
+            <a th:href="@{/auth/logout}">Logout</a>
         </div>
     </nav>
 
     <div class="container">
-        <div class="card">
-            <h2 th:text="${course.id != null} ? '✏️ Edit Course' : '➕ Add New Course'">Course Form</h2>
+        <div class="page-header">
+            <h1 th:text="${course.id != null ? 'Edit Course' : 'Add New Course'}">Course Form</h1>
+        </div>
 
-            <form th:action="${course.id != null} ? @{/courses/update/{id}(id=${course.id})} : @{/courses/store}" 
-                  th:object="${course}" method="post">
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <div class="card">
+            <form th:action="${course.id != null ? '/courses/' + course.id + '/edit' : '/courses'}" 
+                  method="post" th:object="${course}">
                 
                 <div class="form-group">
-                    <label for="name">Course Name *</label>
-                    <input type="text" id="name" th:field="*{name}" required placeholder="Enter course name">
+                    <label class="form-label" for="name">Name *</label>
+                    <input type="text" id="name" th:field="*{name}" class="form-control" required 
+                           placeholder="Enter course name">
                 </div>
 
                 <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" th:field="*{description}" placeholder="Enter course description"></textarea>
+                    <label class="form-label" for="description">Description</label>
+                    <textarea id="description" th:field="*{description}" class="form-control" rows="3"
+                              placeholder="Enter course description"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="departmentId">Department</label>
-                    <select id="departmentId" th:field="*{departmentId}">
-                        <option value="">-- Select Department --</option>
+                    <label class="form-label" for="departmentId">Department</label>
+                    <select id="departmentId" th:field="*{departmentId}" class="form-select">
+                        <option value="">No department</option>
                         <option th:each="dept : ${departments}" 
                                 th:value="${dept.id}" 
-                                th:text="${dept.name}">
-                        </option>
+                                th:text="${dept.name}"
+                                th:selected="${course.departmentId != null && course.departmentId == dept.id}">Department</option>
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label" for="studentIds">Enrolled Students</label>
+                    <select id="studentIds" th:field="*{studentIds}" class="form-select" multiple>
+                        <option th:each="student : ${students}" 
+                                th:value="${student.id}" 
+                                th:text="${student.name}"
+                                th:selected="${course.studentIds != null && course.studentIds.contains(student.id)}">Student</option>
+                    </select>
+                    <p class="form-text">Hold Ctrl/Cmd to select multiple students.</p>
+                </div>
+
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" th:text="${course.id != null} ? 'Update Course' : 'Create Course'">Save</button>
-                    <a href="/courses" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <span th:text="${course.id != null ? 'Update Course' : 'Create Course'}">Save</span>
+                    </button>
+                    <a th:href="@{/courses}" class="btn btn-outline-secondary">Cancel</a>
                 </div>
             </form>
         </div>

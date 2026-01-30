@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Details - Student Management System</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="brand">Student Management System</a>
+        <div class="nav-links">
+            <a th:href="@{/students}">Students</a>
+            <a th:href="@{/teachers}">Teachers</a>
+            <a th:href="@{/courses}">Courses</a>
+            <a th:href="@{/departments}">Departments</a>
+        </div>
+        <div class="user-info" th:if="${session.userRole != null}">
+            <span th:text="${session.userName}">User</span>
+            <span class="role-badge" th:classappend="${session.userRole.name() == 'STUDENT'} ? 'student' : 'teacher'" 
+                  th:text="${session.userRole.name()}">ROLE</span>
+            <a th:href="@{/auth/logout}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Teacher Details</h1>
+            <div class="actions">
+                <a th:if="${session.userRole != null && session.userRole.name() == 'TEACHER'}"
+                   th:href="@{/teachers/{id}/edit(id=${teacher.id})}" class="btn btn-warning">Edit</a>
+                <a th:href="@{/teachers}" class="btn btn-outline-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Basic Information</h2>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">ID</span>
+                <span class="detail-value" th:text="${teacher.id}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Name</span>
+                <span class="detail-value" th:text="${teacher.name}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-value" th:text="${teacher.email}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Department</span>
+                <span class="detail-value" th:text="${teacher.departmentName != null ? teacher.departmentName : 'Not assigned'}"></span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Assigned Students</h2>
+            </div>
+            <div th:if="${students == null || students.isEmpty()}" class="empty-state" style="padding: 1rem;">
+                <p class="mb-0">No students assigned to this teacher.</p>
+            </div>
+            <div th:if="${students != null && !students.isEmpty()}" class="tag-list">
+                <span th:each="student : ${students}" class="tag" th:text="${student.name}">Student Name</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
