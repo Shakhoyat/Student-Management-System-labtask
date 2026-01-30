@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Details - Student Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .navbar { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: white; text-decoration: none; margin: 0 1rem; }
+        .navbar .brand { font-size: 1.5rem; font-weight: bold; color: #3498db; }
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+        .card h2 { color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 1rem; }
+        .info-row { display: flex; padding: 0.8rem 0; border-bottom: 1px solid #f0f0f0; }
+        .info-label { font-weight: 600; color: #7f8c8d; width: 150px; }
+        .info-value { color: #2c3e50; }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 5px; text-decoration: none; font-size: 0.9rem; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .actions { margin-top: 1.5rem; display: flex; gap: 1rem; }
+        .tag { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; margin: 0.2rem; }
+        .tag-course { background: #d5f5e3; color: #27ae60; }
+        .tag-teacher { background: #fadbd8; color: #e74c3c; }
+        .role-badge { background: #e8daef; color: #8e44ad; padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <span class="brand">📚 Student Management System</span>
+        <div>
+            <a href="/">Home</a>
+            <a href="/students">Students</a>
+            <a href="/teachers">Teachers</a>
+            <a href="/courses">Courses</a>
+            <a href="/departments">Departments</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2>👨‍🎓 Student Details</h2>
+            
+            <div class="info-row">
+                <span class="info-label">ID:</span>
+                <span class="info-value" th:text="${student.id}"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span class="info-value" th:text="${student.name}"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Roll Number:</span>
+                <span class="info-value" th:text="${student.roll}"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value" th:text="${student.email ?: 'Not provided'}"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Role:</span>
+                <span class="info-value"><span class="role-badge" th:text="${student.role}"></span></span>
+            </div>
+
+            <div class="actions">
+                <a th:href="@{/students/edit/{id}(id=${student.id})}" class="btn btn-warning">Edit</a>
+                <a href="/students" class="btn btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="card" th:if="${studentEntity != null && studentEntity.courses != null && !studentEntity.courses.isEmpty()}">
+            <h2>📖 Enrolled Courses</h2>
+            <div>
+                <span th:each="course : ${studentEntity.courses}" class="tag tag-course" th:text="${course.name}"></span>
+            </div>
+        </div>
+
+        <div class="card" th:if="${studentEntity != null && studentEntity.teachers != null && !studentEntity.teachers.isEmpty()}">
+            <h2>👨‍🏫 Assigned Teachers</h2>
+            <div>
+                <span th:each="teacher : ${studentEntity.teachers}" class="tag tag-teacher" th:text="${teacher.name}"></span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

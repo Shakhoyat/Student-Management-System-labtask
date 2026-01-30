@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Departments - Student Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .navbar { background: #2c3e50; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: white; text-decoration: none; margin: 0 1rem; }
+        .navbar a:hover { color: #3498db; }
+        .navbar .brand { font-size: 1.5rem; font-weight: bold; color: #3498db; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 10px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .card-header h2 { color: #2c3e50; }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 5px; text-decoration: none; font-size: 0.9rem; border: none; cursor: pointer; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn:hover { opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #2c3e50; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .actions { display: flex; gap: 0.5rem; }
+        .empty-state { text-align: center; padding: 3rem; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <span class="brand">📚 Student Management System</span>
+        <div>
+            <a href="/">Home</a>
+            <a href="/students">Students</a>
+            <a href="/teachers">Teachers</a>
+            <a href="/courses">Courses</a>
+            <a href="/departments">Departments</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>🏢 Departments</h2>
+                <a href="/departments/add" class="btn btn-success">+ Add Department</a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(departments)}" class="empty-state">
+                <p>No departments found. Click "Add Department" to create one.</p>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(departments)}">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="dept : ${departments}">
+                        <td th:text="${dept.id}"></td>
+                        <td th:text="${dept.name}"></td>
+                        <td class="actions">
+                            <a th:href="@{/departments/edit/{id}(id=${dept.id})}" class="btn btn-warning">Edit</a>
+                            <a th:href="@{/departments/delete/{id}(id=${dept.id})}" class="btn btn-danger"
+                               onclick="return confirm('Are you sure? This may affect related teachers and courses.')">Delete</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
