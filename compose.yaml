@@ -1,23 +1,26 @@
 services:
+  # PostgreSQL database service
   postgres:
-    image: postgres:16
-    environment:
+    image: postgres:16  # Use official PostgreSQL 16 image from Docker Hub
+    environment:  # Environment variables for database initialization
       POSTGRES_DB: admindb
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
-    volumes:
+    volumes:  # Persist database data using named volume
       - pgdata:/var/lib/postgresql/data
 
+  # Spring Boot application service
   app:
-    build: .
-    depends_on:
+    build: .  # Build image from Dockerfile in current directory
+    depends_on:  # Wait for postgres service to start before starting app
       - postgres
-    environment:
+    environment:  # Override Spring Boot database connection properties
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/admindb
       SPRING_DATASOURCE_USERNAME: admin
       SPRING_DATASOURCE_PASSWORD: admin
-    ports:
+    ports:  # Map host port 8080 to container port 8080 (host:container)
       - "8080:8080"
 
+# Named volume for persistent storage (survives container restart/deletion)
 volumes:
   pgdata:
