@@ -1,11 +1,12 @@
 package com.example.webapp.controller;
 
 import com.example.webapp.dto.StudentDTO;
-import com.example.webapp.entity.Role;
+import com.example.webapp.security.CustomUserDetails;
 import com.example.webapp.service.CourseService;
 import com.example.webapp.service.StudentService;
 import com.example.webapp.service.TeacherService;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,11 @@ public class StudentController {
     }
 
     @GetMapping
-    public String getAllStudents(Model model) {
+    public String getAllStudents(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
         model.addAttribute("students", studentService.getAllStudentsDTO());
+        if (userDetails != null) {
+            model.addAttribute("currentUserId", userDetails.getProfileId());
+        }
         return "students";
     }
 
@@ -47,12 +51,8 @@ public class StudentController {
     }
 
     @GetMapping("/new")
-    public String showAddForm(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can create student profiles");
-            return "redirect:/students";
-        }
+    @PreAuthorize("hasRole('TEACHER')")
+    public String showAddForm(Model model) {
         model.addAttribute("student", new StudentDTO());
         model.addAttribute("teachers", teacherService.getAllTeachersDTO());
         model.addAttribute("courses", courseService.getAllCoursesDTO());
@@ -60,31 +60,17 @@ public class StudentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('TEACHER')")
     public String createStudent(@ModelAttribute("student") StudentDTO studentDTO,
-                               HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can create student profiles");
-            return "redirect:/students";
-        }
         studentService.saveStudent(studentDTO);
         redirectAttributes.addFlashAttribute("successMessage", "Student created successfully");
         return "redirect:/students";
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model, HttpSession session,
-                              RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        Long userId = (Long) session.getAttribute("userId");
-        
-        // Students can only edit their own profile
-        if (userRole == Role.STUDENT && !id.equals(userId)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "You can only edit your own profile");
-            return "redirect:/students";
-        }
-        
+    @PreAuthorize("hasRole('TEACHER') or (hasRole('STUDENT') and @securityService.isOwnProfile(#id, authentication))")
+    public String showEditForm(@PathVariable Long id, Model model) {
         model.addAttribute("student", studentService.getStudentDTO(id));
         model.addAttribute("teachers", teacherService.getAllTeachersDTO());
         model.addAttribute("courses", courseService.getAllCoursesDTO());
@@ -92,24 +78,20 @@ public class StudentController {
     }
 
     @PostMapping("/{id}/edit")
+    @PreAuthorize("hasRole('TEACHER') or (hasRole('STUDENT') and @securityService.isOwnProfile(#id, authentication))")
     public String updateStudent(@PathVariable Long id,
                                @ModelAttribute("student") StudentDTO studentDTO,
-                               HttpSession session,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
                                RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        Long userId = (Long) session.getAttribute("userId");
         
-        if (userRole == Role.STUDENT) {
-            // Student can only edit their own profile
-            if (!id.equals(userId)) {
-                redirectAttributes.addFlashAttribute("errorMessage", "You can only edit your own profile");
-                return "redirect:/students";
-            }
-            // Student cannot change role - use special update method
-            studentService.updateStudentByStudent(id, studentDTO, userId);
-        } else {
-            // Teacher can edit any student including role
+        boolean isTeacher = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"));
+        
+        if (isTeacher) {
             studentService.updateStudent(id, studentDTO, true);
+        } else {
+            // Student can only edit their own profile and cannot change role
+            studentService.updateStudentByStudent(id, studentDTO, userDetails.getProfileId());
         }
         
         redirectAttributes.addFlashAttribute("successMessage", "Student updated successfully");
@@ -117,14 +99,9 @@ public class StudentController {
     }
 
     @PostMapping("/{id}/delete")
+    @PreAuthorize("hasRole('TEACHER')")
     public String deleteStudent(@PathVariable Long id,
-                               HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can delete students");
-            return "redirect:/students";
-        }
         studentService.deleteStudent(id);
         redirectAttributes.addFlashAttribute("successMessage", "Student deleted successfully");
         return "redirect:/students";

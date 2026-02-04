@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,18 +15,21 @@
             <a th:href="@{/courses}">Courses</a>
             <a th:href="@{/departments}">Departments</a>
         </div>
-        <div class="user-info" th:if="${session.userRole != null}">
-            <span th:text="${session.userName}">User</span>
-            <span class="role-badge" th:classappend="${session.userRole.name() == 'STUDENT'} ? 'student' : 'teacher'" 
-                  th:text="${session.userRole.name()}">ROLE</span>
-            <a th:href="@{/auth/logout}">Logout</a>
+        <div class="user-info" sec:authorize="isAuthenticated()">
+            <span sec:authentication="name">User</span>
+            <span class="role-badge" th:classappend="${#authorization.expression('hasRole(''STUDENT'')')} ? 'student' : 'teacher'">
+                <span sec:authentication="principal.authorities[0].authority"></span>
+            </span>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+            </form>
         </div>
     </nav>
 
     <div class="container">
         <div class="page-header">
             <h1>Students</h1>
-            <a th:if="${session.userRole != null && session.userRole.name() == 'TEACHER'}" 
+            <a sec:authorize="hasRole('TEACHER')" 
                th:href="@{/students/new}" class="btn btn-primary">Add Student</a>
         </div>
 
@@ -36,7 +39,7 @@
         <div class="card">
             <div th:if="${students.isEmpty()}" class="empty-state">
                 <p>No students found.</p>
-                <a th:if="${session.userRole != null && session.userRole.name() == 'TEACHER'}" 
+                <a sec:authorize="hasRole('TEACHER')" 
                    th:href="@{/students/new}" class="btn btn-primary">Add First Student</a>
             </div>
             
@@ -65,15 +68,15 @@
                         <td th:text="${student.courseIds != null ? student.courseIds.size() : 0}"></td>
                         <td class="actions">
                             <a th:href="@{/students/{id}(id=${student.id})}" class="btn btn-sm btn-secondary">View</a>
-                            <th:block th:if="${session.userRole != null}">
-                                <a th:if="${session.userRole.name() == 'TEACHER' || (session.userRole.name() == 'STUDENT' && session.userId == student.id)}"
-                                   th:href="@{/students/{id}/edit(id=${student.id})}" class="btn btn-sm btn-warning">Edit</a>
-                                <form th:if="${session.userRole.name() == 'TEACHER'}" 
-                                      th:action="@{/students/{id}/delete(id=${student.id})}" method="post" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-danger" 
-                                            onclick="return confirm('Are you sure you want to delete this student?')">Delete</button>
-                                </form>
-                            </th:block>
+                            <a sec:authorize="hasRole('TEACHER')"
+                               th:href="@{/students/{id}/edit(id=${student.id})}" class="btn btn-sm btn-warning">Edit</a>
+                            <a sec:authorize="hasRole('STUDENT')" th:if="${currentUserId != null && currentUserId == student.id}"
+                               th:href="@{/students/{id}/edit(id=${student.id})}" class="btn btn-sm btn-warning">Edit</a>
+                            <form sec:authorize="hasRole('TEACHER')" 
+                                  th:action="@{/students/{id}/delete(id=${student.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" 
+                                        onclick="return confirm('Are you sure you want to delete this student?')">Delete</button>
+                            </form>
                         </td>
                     </tr>
                 </tbody>

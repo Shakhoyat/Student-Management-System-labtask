@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - Student Management System</title>
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="brand">Student Management System</a>
+        <div class="nav-links">
+            <a th:href="@{/students}">Students</a>
+            <a th:href="@{/teachers}">Teachers</a>
+            <a th:href="@{/courses}">Courses</a>
+            <a th:href="@{/departments}">Departments</a>
+        </div>
+        <div class="user-info" sec:authorize="isAuthenticated()">
+            <span sec:authentication="name">User</span>
+            <span class="role-badge" th:classappend="${#authorization.expression('hasRole(''STUDENT'')')} ? 'student' : 'teacher'" 
+                  sec:authentication="principal.authorities[0].authority">ROLE</span>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Access Denied</h1>
+        </div>
+
+        <div class="alert alert-danger">
+            <h3>You don't have permission to access this page</h3>
+            <p>This action requires <strong>TEACHER</strong> role. Please contact an administrator if you believe this is an error.</p>
+        </div>
+
+        <div class="card">
+            <a th:href="@{/}" class="btn btn-primary">Go to Home</a>
+        </div>
+    </div>
+</body>
+</html>

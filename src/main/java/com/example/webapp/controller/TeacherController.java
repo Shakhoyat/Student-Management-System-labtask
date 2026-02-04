@@ -1,11 +1,10 @@
 package com.example.webapp.controller;
 
 import com.example.webapp.dto.TeacherDTO;
-import com.example.webapp.entity.Role;
 import com.example.webapp.service.DepartmentService;
 import com.example.webapp.service.StudentService;
 import com.example.webapp.service.TeacherService;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -44,11 +43,8 @@ public class TeacherController {
     }
 
     @GetMapping("/new")
-    public String showAddForm(Model model, HttpSession session) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            return "redirect:/teachers";
-        }
+    @PreAuthorize("hasRole('TEACHER')")
+    public String showAddForm(Model model) {
         model.addAttribute("teacher", new TeacherDTO());
         model.addAttribute("departments", departmentService.getAllDepartmentsDTO());
         model.addAttribute("students", studentService.getAllStudents());
@@ -56,25 +52,17 @@ public class TeacherController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('TEACHER')")
     public String storeTeacher(@ModelAttribute("teacher") TeacherDTO teacherDTO,
-                              HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can create teacher profiles");
-            return "redirect:/teachers";
-        }
         teacherService.saveTeacher(teacherDTO);
         redirectAttributes.addFlashAttribute("successMessage", "Teacher created successfully");
         return "redirect:/teachers";
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model, HttpSession session) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            return "redirect:/teachers";
-        }
+    @PreAuthorize("hasRole('TEACHER')")
+    public String showEditForm(@PathVariable Long id, Model model) {
         model.addAttribute("teacher", teacherService.getTeacherDTO(id));
         model.addAttribute("departments", departmentService.getAllDepartmentsDTO());
         model.addAttribute("students", studentService.getAllStudents());
@@ -82,29 +70,19 @@ public class TeacherController {
     }
 
     @PostMapping("/{id}/edit")
+    @PreAuthorize("hasRole('TEACHER')")
     public String updateTeacher(@PathVariable Long id, 
                                @ModelAttribute("teacher") TeacherDTO teacherDTO,
-                               HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can update teacher profiles");
-            return "redirect:/teachers";
-        }
         teacherService.updateTeacher(id, teacherDTO);
         redirectAttributes.addFlashAttribute("successMessage", "Teacher updated successfully");
         return "redirect:/teachers";
     }
 
     @PostMapping("/{id}/delete")
+    @PreAuthorize("hasRole('TEACHER')")
     public String deleteTeacher(@PathVariable Long id,
-                               HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can delete teacher profiles");
-            return "redirect:/teachers";
-        }
         teacherService.deleteTeacher(id);
         redirectAttributes.addFlashAttribute("successMessage", "Teacher deleted successfully");
         return "redirect:/teachers";

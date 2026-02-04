@@ -1,6 +1,6 @@
 # Student Management System
 
-A Spring Boot web application for managing students, teachers, courses, and departments with role-based authorization.
+A Spring Boot web application for managing students, teachers, courses, and departments with **industry-standard Spring Security authentication and authorization**.
 
 ## Features
 
@@ -25,9 +25,78 @@ A Spring Boot web application for managing students, teachers, courses, and depa
 ## Tech Stack
 
 - **Backend:** Spring Boot 4.0.1, Spring Data JPA, Hibernate
-- **Frontend:** Thymeleaf, HTML, CSS
+- **Security:** Spring Security 7, BCrypt password hashing
+- **Frontend:** Thymeleaf, HTML, CSS, Thymeleaf Spring Security Extras
 - **Database:** PostgreSQL 16
 - **Containerization:** Docker, Docker Compose
+
+## 🔐 Spring Security Implementation
+
+### Authentication
+
+The application uses **Spring Security** with the following features:
+
+| Feature | Implementation |
+|---------|----------------|
+| **Password Encoding** | BCrypt (10 rounds) |
+| **User Storage** | PostgreSQL `users` table |
+| **Session Management** | Server-side sessions with JSESSIONID cookie |
+| **Login** | Form-based authentication |
+| **CSRF Protection** | Enabled by default |
+
+### Security Configuration
+
+```java
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfig {
+    // BCrypt password encoder
+    // DaoAuthenticationProvider with UserDetailsService
+    // Form login with custom login page
+    // Role-based URL authorization
+}
+```
+
+### Authorization (Method-Level Security)
+
+The application uses `@PreAuthorize` annotations for fine-grained access control:
+
+```java
+// Teacher-only operations
+@PreAuthorize("hasRole('TEACHER')")
+public String createStudent(...) { }
+
+// Student can edit own profile, Teacher can edit all
+@PreAuthorize("hasRole('TEACHER') or (hasRole('STUDENT') and @securityService.isOwnProfile(#id, authentication))")
+public String editStudent(@PathVariable Long id, ...) { }
+```
+
+### URL Security Rules
+
+| URL Pattern | Access |
+|-------------|--------|
+| `/`, `/auth/login`, `/auth/register`, `/css/**` | Public |
+| `/students/new`, `/students/*/delete` | TEACHER only |
+| `/teachers/**` (create/edit/delete) | TEACHER only |
+| `/courses/**` (create/edit/delete) | TEACHER only |
+| `/departments/**` (create/edit/delete) | TEACHER only |
+| All other URLs | Authenticated users |
+
+### User Entity (for Authentication)
+
+```sql
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,  -- BCrypt hash
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    role VARCHAR(20) NOT NULL,       -- STUDENT or TEACHER
+    enabled BOOLEAN DEFAULT true,
+    profile_id BIGINT                -- Links to student/teacher profile
+);
+```
 
 ## Getting Started
 
@@ -66,8 +135,9 @@ docker-compose up -d postgres
 ## Usage
 
 1. Open http://localhost:8080
-2. Click **"Login as Teacher"** for full access
-3. Click **"Login as Student"** for limited access
+2. Register a new account or login with existing credentials:
+   - **Teacher account:** `teacher` / `password`
+   - **Student account:** `student` / `password`
 
 ### As a Teacher, you can:
 - Create, edit, and delete **Students**
@@ -202,6 +272,96 @@ src/main/resources/
 | Student ↔ Course | ManyToMany | Student | Students enroll in courses |
 | Department → Teacher | OneToMany | Department | A department has many teachers |
 | Department → Course | OneToMany | Department | A department offers many courses |
+
+## 🔐 Security Architecture Details
+
+### Components
+
+```
+src/main/java/com/example/webapp/
+├── config/
+│   └── SecurityConfig.java         # Spring Security configuration
+├── security/
+│   ├── CustomUserDetails.java      # UserDetails implementation
+│   └── CustomUserDetailsService.java # UserDetailsService implementation
+├── service/
+│   ├── SecurityService.java        # Custom security checks (@securityService)
+│   └── UserService.java            # User registration & management
+├── entity/
+│   └── User.java                   # Authentication user entity
+├── repository/
+│   └── UserRepository.java         # User data access
+└── dto/
+    └── RegisterDTO.java            # Registration form validation
+```
+
+### Security Flow
+
+```
+1. User submits login form (/auth/login)
+        │
+        ▼
+2. Spring Security intercepts request
+        │
+        ▼
+3. CustomUserDetailsService.loadUserByUsername()
+        │
+        ▼
+4. BCrypt compares password hash
+        │
+        ▼
+5. Authentication object created with authorities
+        │
+        ▼
+6. Session created with JSESSIONID cookie
+        │
+        ▼
+7. User redirected to home page
+```
+
+### Password Security
+
+- **Algorithm:** BCrypt with strength factor 10
+- **Hash Example:** `$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z6qMXPrpcCc8Jq5kvuGvDiBi`
+- **Rainbow Table Resistant:** Yes (salted)
+- **Brute Force Resistant:** Yes (computationally expensive)
+
+### Session Security
+
+| Feature | Configuration |
+|---------|---------------|
+| Session ID Cookie | `JSESSIONID` (HttpOnly) |
+| Maximum Sessions | 1 per user |
+| Invalid Session URL | `/auth/login` |
+| Logout | Invalidates session, deletes cookie |
+
+### CSRF Protection
+
+- Enabled by default for all state-changing requests
+- Token automatically included in Thymeleaf forms via `th:action`
+- Logout requires POST with CSRF token
+
+## Docker Configuration
+
+### Services
+
+| Service | Image | Port | Description |
+|---------|-------|------|-------------|
+| `app` | Custom (Dockerfile) | 8080:8080 | Spring Boot application |
+| `postgres` | postgres:16 | 5432:5432 | PostgreSQL database |
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/admindb` | Database connection |
+| `POSTGRES_DB` | `admindb` | Database name |
+| `POSTGRES_USER` | `admin` | Database user |
+| `POSTGRES_PASSWORD` | `admin` | Database password |
+
+## License
+
+This project is for educational purposes.
 | Teacher → Department | ManyToOne | Teacher | Each teacher belongs to one department |
 | Course → Department | ManyToOne | Course | Each course belongs to one department |
 

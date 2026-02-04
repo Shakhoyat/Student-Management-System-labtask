@@ -11,32 +11,26 @@
         <div class="login-card">
             <h1>Student Management System</h1>
             
-            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-            
-            <p class="text-center text-muted mb-2">Quick Demo Access</p>
-            <div class="demo-buttons">
-                <a th:href="@{/auth/demo-teacher}" class="btn btn-success">Login as Teacher</a>
-                <a th:href="@{/auth/demo-student}" class="btn btn-primary">Login as Student</a>
-            </div>
-            
-            <div class="divider">or login manually</div>
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
             
             <form th:action="@{/auth/login}" method="post">
                 <div class="form-group">
-                    <label class="form-label" for="name">Name</label>
-                    <input type="text" id="name" name="name" class="form-control" required 
-                           placeholder="Enter your name">
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required 
+                           placeholder="Enter your username">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="role">Role</label>
-                    <select id="role" name="role" class="form-select" required>
-                        <option value="">Select role</option>
-                        <option value="STUDENT">Student</option>
-                        <option value="TEACHER">Teacher</option>
-                    </select>
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required 
+                           placeholder="Enter your password">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
             </form>
+            
+            <div class="divider">Don't have an account?</div>
+            
+            <a th:href="@{/auth/register}" class="btn btn-outline-secondary" style="width: 100%;">Register</a>
         </div>
     </div>
 </body>

@@ -1,11 +1,10 @@
 package com.example.webapp.controller;
 
 import com.example.webapp.dto.CourseDTO;
-import com.example.webapp.entity.Role;
 import com.example.webapp.service.CourseService;
 import com.example.webapp.service.DepartmentService;
 import com.example.webapp.service.StudentService;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -44,11 +43,8 @@ public class CourseController {
     }
 
     @GetMapping("/new")
-    public String showAddForm(Model model, HttpSession session) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            return "redirect:/courses";
-        }
+    @PreAuthorize("hasRole('TEACHER')")
+    public String showAddForm(Model model) {
         model.addAttribute("course", new CourseDTO());
         model.addAttribute("departments", departmentService.getAllDepartmentsDTO());
         model.addAttribute("students", studentService.getAllStudents());
@@ -56,25 +52,17 @@ public class CourseController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('TEACHER')")
     public String storeCourse(@ModelAttribute("course") CourseDTO courseDTO,
-                             HttpSession session,
                              RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can create courses");
-            return "redirect:/courses";
-        }
         courseService.saveCourse(courseDTO);
         redirectAttributes.addFlashAttribute("successMessage", "Course created successfully");
         return "redirect:/courses";
     }
 
     @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable Long id, Model model, HttpSession session) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            return "redirect:/courses";
-        }
+    @PreAuthorize("hasRole('TEACHER')")
+    public String showEditForm(@PathVariable Long id, Model model) {
         model.addAttribute("course", courseService.getCourseDTO(id));
         model.addAttribute("departments", departmentService.getAllDepartmentsDTO());
         model.addAttribute("students", studentService.getAllStudents());
@@ -82,29 +70,19 @@ public class CourseController {
     }
 
     @PostMapping("/{id}/edit")
+    @PreAuthorize("hasRole('TEACHER')")
     public String updateCourse(@PathVariable Long id, 
                               @ModelAttribute("course") CourseDTO courseDTO,
-                              HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can update courses");
-            return "redirect:/courses";
-        }
         courseService.updateCourse(id, courseDTO);
         redirectAttributes.addFlashAttribute("successMessage", "Course updated successfully");
         return "redirect:/courses";
     }
 
     @PostMapping("/{id}/delete")
+    @PreAuthorize("hasRole('TEACHER')")
     public String deleteCourse(@PathVariable Long id,
-                              HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        Role userRole = (Role) session.getAttribute("userRole");
-        if (userRole != Role.TEACHER) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Only teachers can delete courses");
-            return "redirect:/courses";
-        }
         courseService.deleteCourse(id);
         redirectAttributes.addFlashAttribute("successMessage", "Course deleted successfully");
         return "redirect:/courses";

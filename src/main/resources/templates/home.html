@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,23 +15,27 @@
             <a th:href="@{/courses}">Courses</a>
             <a th:href="@{/departments}">Departments</a>
         </div>
-        <div class="user-info" th:if="${session.userRole != null}">
-            <span th:text="${session.userName}">User</span>
-            <span class="role-badge" th:classappend="${session.userRole.name() == 'STUDENT'} ? 'student' : 'teacher'" 
-                  th:text="${session.userRole.name()}">ROLE</span>
-            <a th:href="@{/auth/logout}">Logout</a>
+        <div class="user-info" sec:authorize="isAuthenticated()">
+            <span sec:authentication="name">User</span>
+            <span class="role-badge" th:classappend="${#authorization.expression('hasRole(''STUDENT'')')} ? 'student' : 'teacher'">
+                <span sec:authentication="principal.authorities[0].authority"></span>
+            </span>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Logout</button>
+            </form>
         </div>
     </nav>
 
     <div class="container">
-        <div th:if="${session.userRole == null}" class="welcome-section">
+        <div sec:authorize="!isAuthenticated()" class="welcome-section">
             <h1>Student Management System</h1>
             <p>Please <a th:href="@{/auth/login}">login</a> to access the system.</p>
         </div>
 
-        <div th:if="${session.userRole != null}">
+        <div sec:authorize="isAuthenticated()">
             <div class="page-header">
                 <h1>Dashboard</h1>
+                <p>Welcome, <span sec:authentication="principal.name"></span>!</p>
             </div>
 
             <div class="card">
@@ -62,22 +66,26 @@
                 <div class="card-header">
                     <h2>Your Permissions</h2>
                 </div>
-                <div th:if="${session.userRole.name() == 'TEACHER'}">
-                    <ul class="permissions-list">
-                        <li><span class="icon-check">&#10003;</span> Create new student profiles</li>
-                        <li><span class="icon-check">&#10003;</span> Edit all student information</li>
-                        <li><span class="icon-check">&#10003;</span> Delete student profiles</li>
-                        <li><span class="icon-check">&#10003;</span> Manage courses and departments</li>
-                        <li><span class="icon-check">&#10003;</span> Full administrative access</li>
+                <div sec:authorize="hasRole('TEACHER')" class="card-body">
+                    <ul class="list-simple">
+                        <li>Create new student profiles</li>
+                        <li>Edit all student information</li>
+                        <li>Delete student profiles</li>
+                        <li>Manage courses and departments</li>
+                        <li>Full administrative access</li>
                     </ul>
                 </div>
-                <div th:if="${session.userRole.name() == 'STUDENT'}">
-                    <ul class="permissions-list">
-                        <li><span class="icon-check">&#10003;</span> View your own profile</li>
-                        <li><span class="icon-check">&#10003;</span> Edit your name and email</li>
-                        <li><span class="icon-cross">&#10007;</span> Cannot change your role</li>
-                        <li><span class="icon-cross">&#10007;</span> Cannot delete profiles</li>
-                        <li><span class="icon-cross">&#10007;</span> Cannot create new students</li>
+                <div sec:authorize="hasRole('STUDENT')" class="card-body">
+                    <p><strong>Allowed:</strong></p>
+                    <ul class="list-simple">
+                        <li>View your own profile</li>
+                        <li>Edit your name and email</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong>Restricted:</strong></p>
+                    <ul class="list-simple text-muted">
+                        <li>Cannot change your role</li>
+                        <li>Cannot delete profiles</li>
+                        <li>Cannot create new students</li>
                     </ul>
                 </div>
             </div>
