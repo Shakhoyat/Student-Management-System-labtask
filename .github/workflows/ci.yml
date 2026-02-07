@@ -1,0 +1,52 @@
+# GitHub Actions CI/CD Pipeline
+# WHAT: Automatically runs build + tests on every push/PR to main branch
+# HOW: GitHub triggers this workflow, spins up an Ubuntu VM, installs JDK, runs Maven
+
+name: CI - Build & Test
+
+# WHAT: Defines WHEN this workflow runs
+# HOW: Triggers on push to main OR when a Pull Request targets main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# WHAT: Defines the jobs (tasks) to run
+jobs:
+  build-and-test:
+    # WHAT: Specifies the OS for the runner
+    # HOW: GitHub provides a free Ubuntu virtual machine
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code from repository
+      # WHAT: Downloads your repo code into the runner VM
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Java JDK 17
+      # WHAT: Installs JDK 17 (same version as our project)
+      # HOW: Uses Eclipse Temurin distribution (same as our Docker image)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven  # Caches Maven dependencies for faster builds
+
+      # Step 3: Build the project
+      # WHAT: Compiles code and runs all unit tests
+      # HOW: Uses Maven wrapper (mvnw) to ensure consistent Maven version
+      - name: Build and Test
+        run: ./mvnw clean verify
+
+      # Step 4: Upload test reports (if tests fail)
+      # WHAT: Saves test reports as artifacts for debugging
+      # HOW: Only uploads when tests fail (if: failure())
+      - name: Upload Test Reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: target/surefire-reports/
