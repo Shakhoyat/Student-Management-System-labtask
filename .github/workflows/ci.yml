@@ -38,6 +38,9 @@ jobs:
       # Step 3: Build the project
       # WHAT: Compiles code and runs all unit tests
       # HOW: Uses Maven wrapper (mvnw) to ensure consistent Maven version
+      - name: Make Maven wrapper executable
+        run: chmod +x ./mvnw
+
       - name: Build and Test
         run: ./mvnw clean verify
 
